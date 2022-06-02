@@ -8,8 +8,4 @@ public class NotFoundException extends RuntimeException{
     public NotFoundException() {
         super("Id mövcud deyil!");
     }
-
-    public NotFoundException(String message, Throwable cause) {
-        super(message, cause);
-    }
 }

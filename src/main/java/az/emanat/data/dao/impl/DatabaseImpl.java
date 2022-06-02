@@ -1,27 +1,23 @@
 package az.emanat.data.dao.impl;
 
 import az.emanat.data.dao.Database;
-import az.emanat.data.dto.InsertRequestDto;
 import az.emanat.data.dto.PersonResponseDto;
-import az.emanat.data.dto.UpdateRequestDto;
 import az.emanat.exception.NotFoundException;
-import az.emanat.service.EmanatService;
+import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
-import com.opencsv.bean.CsvToBean;
-import com.opencsv.bean.CsvToBeanBuilder;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.json.simple.JSONObject;
 import org.springframework.stereotype.Repository;
 
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 @Repository
 @Slf4j
@@ -32,43 +28,50 @@ public class DatabaseImpl implements Database {
 
     private static int autoIncrementId = 1;
 
+    @SneakyThrows
+    @Override
+    public List<String> select(String tableName, Long rowId) {
+        PersonResponseDto personResponseDto = selectById(tableName, rowId);
+        if (personResponseDto == null) {
+            throw new NotFoundException();
+        }
+        LinkedList<String> responseValue = new LinkedList<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(tableName + ".csv")); CSVParser parser = CSVFormat.DEFAULT.withDelimiter(',').withHeader().parse(br)) {
+            for (CSVRecord record : parser) {
+                long recordNumber = record.getRecordNumber();
+                if (recordNumber == rowId) {
+                    Map<String, String> stringStringMap = record.toMap();
+                    for (Map.Entry<String, String> m : stringStringMap.entrySet()) {
+                        responseValue.add(m.getValue());
+                    }
+                }
+            }
+        }
+        return responseValue;
+    }
+
     @Override
     public int insert(String tableName, List<String> values) {
         File file = new File(tableName + ".csv");
         return prepareCsvFileAndInsertDataToCsvFile(values, file);
     }
 
-    private int prepareCsvFileAndInsertDataToCsvFile(List<String> values, File file) {
-        if (!file.exists()) {
-            theRows.clear();
-            autoIncrementId = 1;
-        }
-        try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
-            String[] header = new String[]{"id", "name", "surname", "age", "salary"};
-            String id = String.valueOf(autoIncrementId);
-            values.add(0, id);
-            theRows.add(values.toArray(String[]::new));//arasdiracam
-            writer.writeNext(header);
-            writer.writeAll(theRows, false);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        autoIncrementId++;
-        return Integer.parseInt(values.get(0));
-    }
-
+    @SneakyThrows
     @Override
-    public void update(String tableName, Long rowId,List<String> values) {
-//        PersonResponseDto personResponseDto = selectById(tableName, rowId);
-//        personResponseDto.setName(requestDto.getName());
-//        personResponseDto.setSurname(requestDto.getSurname());
-//        personResponseDto.setAge(requestDto.getAge());
-//        personResponseDto.setSalary(requestDto.getSalary());
-//        List<String> updateData = new ArrayList<>();
-//        updateData.add(personResponseDto.toString());
-//        insert(tableName, updateData);
-
+    public void update(String tableName, Long rowId, List<String> values) {
+        File file = new File(tableName + ".csv");
+        if (!file.exists())
+            throw new FileNotFoundException();
+        List<String> select = select(tableName, rowId);
+        if (select.isEmpty()) {
+            throw new NotFoundException();
+        }
+        select.clear();
+        select.add(String.valueOf(rowId));
+        select.addAll(values);
+        copyCsv(tableName, select, rowId);
     }
+
 
     @SneakyThrows
     @Override
@@ -82,6 +85,7 @@ public class DatabaseImpl implements Database {
         return responseDto;
     }
 
+
     private PersonResponseDto preparePersonResponseDto(CSVRecord record) {
         PersonResponseDto responseDto;
         responseDto = new PersonResponseDto();
@@ -93,5 +97,34 @@ public class DatabaseImpl implements Database {
         return responseDto;
     }
 
+    @SneakyThrows
+    private int prepareCsvFileAndInsertDataToCsvFile(List<String> values, File file) {
+        if (!file.exists()) {
+            theRows.clear();
+            autoIncrementId = 1;
+        }
+        try (CSVWriter writer = new CSVWriter(new FileWriter(file))) {
+            String[] header = new String[]{"id", "name", "surname", "age", "salary"};
+            String id = String.valueOf(autoIncrementId);
+            values.add(0, id);
+            theRows.add(values.toArray(String[]::new));//arasdiracam
+            writer.writeNext(header);
+            writer.writeAll(theRows, false);
+        }
+        autoIncrementId++;
+        return Integer.parseInt(values.get(0));
+    }
 
+
+    @SneakyThrows
+    private void copyCsv(String tableName, List<String> values, Long rowId) {
+        CSVReader reader2 = new CSVReader(new FileReader(tableName + ".csv"));
+        List<String[]> allElements = reader2.readAll();
+        allElements.add(Math.toIntExact(rowId), values.toArray(new String[0]));
+        allElements.remove(Math.toIntExact(++rowId));
+        CSVWriter writer = new CSVWriter(new FileWriter(tableName + ".csv"));
+        writer.writeAll(allElements);
+        writer.flush();
+        writer.close();
+    }
 }

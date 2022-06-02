@@ -10,6 +10,6 @@ import java.util.List;
 public class EmanatRequestDto implements Serializable {
     @ApiModelProperty(example = "table-name", notes = "table name", required = true, position = 1)
     private String tableName;
-    @ApiModelProperty(example = "Anar,Mammadov,25,800", notes = "row values", required = true, position = 2)
+    @ApiModelProperty(example = "\"Anar\",\"Mammadov\",\"25\",\"1500\",", notes = "row values", required = true, position = 2)
     private List<String> values;
 }

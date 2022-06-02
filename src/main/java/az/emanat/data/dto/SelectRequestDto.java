@@ -4,12 +4,11 @@ import io.swagger.annotations.ApiModelProperty;
 import lombok.Data;
 
 import java.io.Serializable;
-import java.util.List;
 
 @Data
-public class InsertRequestDto implements Serializable {
+public class SelectRequestDto implements Serializable {
     @ApiModelProperty(example = "table-name", notes = "table name", required = true, position = 1)
     private String tableName;
-//    @ApiModelProperty(example = "\"Anar\",\"Mammadov\",\"25\",\"1500\",", notes = "row values", required = true, position = 2)
-    private List<String> values;
+    @ApiModelProperty(example = "1", notes = "row id", required = true, position = 2)
+    private Long id;
 }

@@ -1,10 +1,13 @@
 package az.emanat.service;
 
-import az.emanat.data.dto.EmanatRequestDto;
+import az.emanat.data.dto.InsertRequestDto;
+import az.emanat.data.dto.PersonResponseDto;
+import az.emanat.data.dto.SelectRequestDto;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 public interface EmanatService {
-    int insert(EmanatRequestDto requestDto) throws IOException;
+    int insert(InsertRequestDto requestDto) throws IOException;
+    PersonResponseDto selectById(SelectRequestDto requestDto);
+
 }

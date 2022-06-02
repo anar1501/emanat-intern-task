@@ -1,16 +1,16 @@
 package az.emanat.controller;
 
-import az.emanat.data.dto.EmanatRequestDto;
+import az.emanat.data.dto.InsertRequestDto;
+import az.emanat.data.dto.PersonResponseDto;
+import az.emanat.data.dto.SelectRequestDto;
+import az.emanat.data.dto.UpdateRequestDto;
 import az.emanat.service.EmanatService;
 import io.swagger.annotations.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 
 @RestController
@@ -30,8 +30,25 @@ public class EmanatController {
     )
     public int insert(
             @ApiParam("Insert operation ")
-            @RequestBody EmanatRequestDto requestDto
-                     ) throws IOException {
+            @RequestBody InsertRequestDto requestDto
+    ) throws IOException {
         return emanatService.insert(requestDto);
+    }
+
+    @GetMapping(value = "/select{id}")
+    @ApiOperation(value = "select data from table-name by id")
+    @ApiResponses(
+            value = {
+                    @ApiResponse(code = 200, message = "Successful code"),
+                    @ApiResponse(code = 400, message = "Bad Request"),
+                    @ApiResponse(code = 404, message = "Not Found")
+            })
+    public ResponseEntity<PersonResponseDto> selectById(@RequestBody SelectRequestDto requestDto) {
+        return ResponseEntity.ok(emanatService.selectById(requestDto));
+    }
+
+    @PutMapping(value = "/update/{id}")
+    public HttpStatus updateById(@RequestBody UpdateRequestDto requestDto, @PathVariable Long id, @RequestParam String tableName) {
+        return HttpStatus.OK;
     }
 }
